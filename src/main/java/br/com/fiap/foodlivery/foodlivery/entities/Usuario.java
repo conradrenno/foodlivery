@@ -26,13 +26,14 @@ public class Usuario {
     @Embedded
     public Endereco endereco;
 
-    public Usuario(Usuario usuario) {
-        this.nome = usuario.getNome();
-        this.email = usuario.getEmail();
-        this.login = usuario.getLogin();
-        this.senha = usuario.getSenha();
-        this.dataUltimaAlteracao = usuario.getDataUltimaAlteracao();
-        this.endereco = usuario.getEndereco();
+    @PrePersist
+    public void prePersist() {
+        dataUltimaAlteracao = new Date();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        dataUltimaAlteracao = new Date();
     }
     
 }
