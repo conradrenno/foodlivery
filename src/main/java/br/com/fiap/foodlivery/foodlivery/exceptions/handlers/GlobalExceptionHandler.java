@@ -1,5 +1,6 @@
 package br.com.fiap.foodlivery.foodlivery.exceptions.handlers;
 
+import br.com.fiap.foodlivery.foodlivery.exceptions.custom.BusinessException;
 import br.com.fiap.foodlivery.foodlivery.exceptions.custom.DatabaseException;
 import br.com.fiap.foodlivery.foodlivery.exceptions.custom.ResourceNotFoundException;
 import br.com.fiap.foodlivery.foodlivery.exceptions.dtos.CustomError;
@@ -24,6 +25,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DatabaseException.class)
     public ResponseEntity<CustomError> DatabaseException(DatabaseException e, HttpServletRequest request) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
+        CustomError customError = new CustomError(LocalDateTime.now(), status.value(), e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(customError);
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<CustomError> BusinessException(BusinessException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.FORBIDDEN;
         CustomError customError = new CustomError(LocalDateTime.now(), status.value(), e.getMessage(), request.getRequestURI());
         return ResponseEntity.status(status).body(customError);
     }

@@ -19,7 +19,9 @@ public class Usuario {
     public Long id;
     public String nome;
     public String email;
+    @Column(unique = true, nullable = false)
     public String login;
+    @Column(nullable = false)
     public String senha;
     public Date dataUltimaAlteracao;
 

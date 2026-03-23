@@ -3,14 +3,15 @@ package br.com.fiap.foodlivery.foodlivery.services;
 import br.com.fiap.foodlivery.foodlivery.dtos.UsuarioRequestDTO;
 import br.com.fiap.foodlivery.foodlivery.dtos.UsuarioResponseDTO;
 import br.com.fiap.foodlivery.foodlivery.entities.Usuario;
+import br.com.fiap.foodlivery.foodlivery.exceptions.custom.BusinessException;
 import br.com.fiap.foodlivery.foodlivery.exceptions.custom.DatabaseException;
 import br.com.fiap.foodlivery.foodlivery.exceptions.custom.ResourceNotFoundException;
 import br.com.fiap.foodlivery.foodlivery.mappers.UsuarioMapper;
 import br.com.fiap.foodlivery.foodlivery.repositories.UsuarioRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,10 +19,12 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper) {
+    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Page<UsuarioResponseDTO> findAll(Pageable pageable) {
@@ -37,23 +40,42 @@ public class UsuarioService {
     }
 
     public UsuarioResponseDTO save(UsuarioRequestDTO usuarioRequestDTO) {
+
+        if (usuarioRepository.existsByLogin(usuarioRequestDTO.getLogin())) {
+            throw new BusinessException("Login já cadastrado");
+        }
         Usuario usuario = usuarioMapper.toEntity(usuarioRequestDTO);
+        usuario.setSenha(passwordEncoder.encode(usuarioRequestDTO.getSenha()));
         usuario = usuarioRepository.save(usuario);
         return usuarioMapper.toResponseDTO(usuario);
     }
 
     public UsuarioResponseDTO update(Long id, UsuarioRequestDTO usuarioRequestDTO) {
 
-        try {
-            Usuario existingUsuario = usuarioRepository.getReferenceById(id);
+        Usuario existingUsuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+
+        if (usuarioRequestDTO.getLogin() != null &&
+                !usuarioRequestDTO.getLogin().equals(existingUsuario.getLogin()) &&
+                usuarioRepository.existsByLogin(usuarioRequestDTO.getLogin())){
+                throw new BusinessException("Login já cadastrado");
+        }
+
+
             existingUsuario = usuarioMapper.updateFromDTO(usuarioRequestDTO, existingUsuario);
+
+            if (usuarioRequestDTO.getSenha() != null &&
+                    !usuarioRequestDTO.getSenha().isBlank()) {
+                existingUsuario.setSenha(passwordEncoder.encode(usuarioRequestDTO.getSenha()));
+            }
+
+            try {
             existingUsuario = usuarioRepository.save(existingUsuario);
+            } catch (DataIntegrityViolationException e) {
+                throw new DatabaseException("Falha de integridade referencial");
+            }
             UsuarioResponseDTO usuarioResponseDTO = usuarioMapper.toResponseDTO(existingUsuario);
             return usuarioResponseDTO;
-
-        } catch (EntityNotFoundException e) {
-            throw new ResourceNotFoundException("Recurso não encontrado");
-        }
     }
 
     public void delete(Long id) {
