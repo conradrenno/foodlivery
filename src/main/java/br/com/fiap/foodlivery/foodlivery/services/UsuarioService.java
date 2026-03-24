@@ -1,5 +1,6 @@
 package br.com.fiap.foodlivery.foodlivery.services;
 
+import br.com.fiap.foodlivery.foodlivery.dtos.UpdatePasswordDTO;
 import br.com.fiap.foodlivery.foodlivery.dtos.UsuarioRequestDTO;
 import br.com.fiap.foodlivery.foodlivery.dtos.UsuarioResponseDTO;
 import br.com.fiap.foodlivery.foodlivery.entities.Usuario;
@@ -61,7 +62,6 @@ public class UsuarioService {
                 throw new BusinessException("Login já cadastrado");
         }
 
-
             existingUsuario = usuarioMapper.updateFromDTO(usuarioRequestDTO, existingUsuario);
 
             if (usuarioRequestDTO.getSenha() != null &&
@@ -76,6 +76,31 @@ public class UsuarioService {
             }
             UsuarioResponseDTO usuarioResponseDTO = usuarioMapper.toResponseDTO(existingUsuario);
             return usuarioResponseDTO;
+    }
+
+    public void updatePassword(Long id, UpdatePasswordDTO updatePasswordDTO) {
+
+        String senhaAtual = updatePasswordDTO.getSenhaAtual();
+        String novaSenha = updatePasswordDTO.getSenhaNova();
+        String confirmarSenha = updatePasswordDTO.getConfirmarSenha();
+
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+
+        if (!passwordEncoder.matches(senhaAtual, usuario.getSenha())) {
+            throw new BusinessException("Senha atual inválida");
+        }
+
+        if (!updatePasswordDTO.getSenhaNova().equals(confirmarSenha)) {
+            throw new BusinessException("As senhas não coincidem");
+        }
+
+        if (passwordEncoder.matches(novaSenha, usuario.getSenha())) {
+            throw new BusinessException("A nova senha deve ser diferente da atual");
+        }
+
+        usuario.setSenha(passwordEncoder.encode(novaSenha));
+        usuarioRepository.save(usuario);
     }
 
     public void delete(Long id) {

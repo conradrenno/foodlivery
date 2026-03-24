@@ -1,8 +1,10 @@
 package br.com.fiap.foodlivery.foodlivery.controllers;
 
+import br.com.fiap.foodlivery.foodlivery.dtos.UpdatePasswordDTO;
 import br.com.fiap.foodlivery.foodlivery.dtos.UsuarioRequestDTO;
 import br.com.fiap.foodlivery.foodlivery.dtos.UsuarioResponseDTO;
 import br.com.fiap.foodlivery.foodlivery.services.UsuarioService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +36,7 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<UsuarioResponseDTO> save(@RequestBody UsuarioRequestDTO usuario) {
+    public ResponseEntity<UsuarioResponseDTO> save(@Valid @RequestBody UsuarioRequestDTO usuario) {
         UsuarioResponseDTO savedUsuario = usuarioService.save(usuario);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
@@ -44,9 +46,15 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> update(@PathVariable Long id, @RequestBody UsuarioRequestDTO usuarioDTO) {
+    public ResponseEntity<UsuarioResponseDTO> update(@PathVariable Long id,@Valid @RequestBody UsuarioRequestDTO usuarioDTO) {
         UsuarioResponseDTO updatedUsuarioDTO = usuarioService.update(id, usuarioDTO);
         return ResponseEntity.ok(updatedUsuarioDTO);
+    }
+
+    @PostMapping("/{id}/password")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long id, @Valid @RequestBody UpdatePasswordDTO updatePasswordDTO) {
+        usuarioService.updatePassword(id, updatePasswordDTO);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
