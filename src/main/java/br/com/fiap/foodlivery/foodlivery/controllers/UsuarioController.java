@@ -46,12 +46,12 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> update(@PathVariable Long id,@Valid @RequestBody UsuarioRequestDTO usuarioDTO) {
+    public ResponseEntity<UsuarioResponseDTO> update(@PathVariable Long id, @RequestBody UsuarioRequestDTO usuarioDTO) {
         UsuarioResponseDTO updatedUsuarioDTO = usuarioService.update(id, usuarioDTO);
         return ResponseEntity.ok(updatedUsuarioDTO);
     }
 
-    @PostMapping("/{id}/password")
+    @PutMapping("/{id}/password")
     public ResponseEntity<Void> updatePassword(@PathVariable Long id, @Valid @RequestBody UpdatePasswordDTO updatePasswordDTO) {
         usuarioService.updatePassword(id, updatePasswordDTO);
         return ResponseEntity.noContent().build();
